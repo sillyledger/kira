@@ -17,19 +17,6 @@ const badges = {
   dead: { label: 'Expired', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
 }
 
-const S = {
-  shell: { display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#fff' },
-  sidebar: { background: '#fff', borderRight: '1px solid #ebebeb', padding: '20px 0', display: 'flex', flexDirection: 'column' },
-  logoWrap: { display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 18px', borderBottom: '1px solid #ebebeb' },
-  logoMark: { width: 24, height: 24, background: '#111', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700 },
-  logoText: { fontSize: 13, fontWeight: 600, letterSpacing: '-.3px', color: '#111' },
-  navSection: { padding: '12px 8px', flex: 1 },
-  navLabel: { fontSize: 10, fontWeight: 500, color: '#bbb', letterSpacing: '.07em', textTransform: 'uppercase', padding: '0 8px', margin: '12px 0 3px' },
-  navItem: (active) => ({ display: 'flex', alignItems: 'center', padding: '6px 8px', borderRadius: 6, fontSize: 12.5, color: active ? '#111' : '#444', fontWeight: active ? 500 : 400, background: active ? '#f5f5f5' : 'transparent', marginBottom: 1, cursor: 'pointer' }),
-  sidebarFoot: { padding: '12px 14px', borderTop: '1px solid #ebebeb', display: 'flex', alignItems: 'center', gap: 8 },
-  avatar: { width: 22, height: 22, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: '#fff', fontWeight: 600 },
-}
-
 export default function Dashboard() {
   const [expanded, setExpanded] = useState(null)
   const [filter, setFilter] = useState('all')
@@ -43,42 +30,73 @@ export default function Dashboard() {
   })
 
   return (
-    <div style={S.shell}>
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#fff' }}>
 
       {/* Sidebar */}
-      <div style={S.sidebar}>
-        <div style={S.logoWrap}>
-          <div style={S.logoMark}>T</div>
-          <span style={S.logoText}>Tenkaro</span>
+      <div style={{ background: '#fff', borderRight: '1px solid #ebebeb', padding: '16px 0', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px 16px', borderBottom: '1px solid #ebebeb' }}>
+          <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>T</div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Tenkaro</span>
         </div>
-        <div style={S.navSection}>
-          {[
-            ['Monitor', [['Domains', true], ['SSL Certs', false], ['DNS Records', false]]],
-            ['Alerts',  [['Notifications', false], ['History', false]]],
-            ['Account', [['Settings', false], ['Billing', false]]],
-          ].map(([label, items]) => (
-            <div key={label}>
-              <div style={S.navLabel}>{label}</div>
-              {items.map(([name, active]) => (
-                <div key={name} style={S.navItem(active)}>
-                  {name}
-                  {name === 'Domains' && <span style={{ marginLeft: 'auto', fontSize: 10, background: '#f0f0f0', color: '#999', padding: '1px 6px', borderRadius: 8 }}>5</span>}
-                  {name === 'Notifications' && <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />}
-                </div>
-              ))}
-            </div>
-          ))}
+
+        {/* Nav */}
+        <div style={{ padding: '12px 10px', flex: 1, overflowY: 'auto' }}>
+
+          {/* Monitor section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', marginBottom: 2 }}>
+            <span style={{ fontSize: 15 }}>◫</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#999', letterSpacing: '.06em', textTransform: 'uppercase' }}>Monitor</span>
+          </div>
+          <div style={{ borderLeft: '1.5px solid #ebebeb', marginLeft: 15, paddingLeft: 12, marginBottom: 10 }}>
+            {[['Domains', true, '5'], ['SSL Certs', false, null], ['DNS Records', false, null]].map(([name, active, count]) => (
+              <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: 6, fontSize: 13.5, color: active ? '#111' : '#555', fontWeight: active ? 500 : 400, background: active ? '#f5f5f5' : 'transparent', marginBottom: 1, cursor: 'pointer' }}>
+                {name}
+                {count && <span style={{ fontSize: 10.5, background: '#f0f0f0', color: '#999', padding: '1px 6px', borderRadius: 8, fontWeight: 500 }}>{count}</span>}
+              </div>
+            ))}
+          </div>
+
+          {/* Alerts section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', marginBottom: 2 }}>
+            <span style={{ fontSize: 15 }}>◎</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#999', letterSpacing: '.06em', textTransform: 'uppercase' }}>Alerts</span>
+          </div>
+          <div style={{ borderLeft: '1.5px solid #ebebeb', marginLeft: 15, paddingLeft: 12, marginBottom: 10 }}>
+            {[['Notifications', false, true], ['History', false, false]].map(([name, active, dot]) => (
+              <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: 6, fontSize: 13.5, color: active ? '#111' : '#555', fontWeight: active ? 500 : 400, background: active ? '#f5f5f5' : 'transparent', marginBottom: 1, cursor: 'pointer' }}>
+                {name}
+                {dot && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />}
+              </div>
+            ))}
+          </div>
+
+          {/* Account section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', marginBottom: 2 }}>
+            <span style={{ fontSize: 15 }}>◉</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#999', letterSpacing: '.06em', textTransform: 'uppercase' }}>Account</span>
+          </div>
+          <div style={{ borderLeft: '1.5px solid #ebebeb', marginLeft: 15, paddingLeft: 12 }}>
+            {['Settings', 'Billing'].map(name => (
+              <div key={name} style={{ padding: '6px 8px', borderRadius: 6, fontSize: 13.5, color: '#555', marginBottom: 1, cursor: 'pointer' }}>
+                {name}
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={S.sidebarFoot}>
-          <div style={S.avatar}>P</div>
+
+        {/* Footer */}
+        <div style={{ padding: '12px 14px', borderTop: '1px solid #ebebeb', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', fontWeight: 600, flexShrink: 0 }}>P</div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: '#111' }}>Pieter</div>
-            <div style={{ fontSize: 10, color: '#999' }}>Free · 5/5 domains</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>Pieter</div>
+            <div style={{ fontSize: 11, color: '#999' }}>Free · 5/5 domains</div>
           </div>
         </div>
       </div>
 
-      {/* Main — centered */}
+      {/* Main */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff' }}>
         <div style={{ width: '100%', maxWidth: 860, padding: '36px 24px 0' }}>
 
@@ -88,7 +106,7 @@ export default function Dashboard() {
               <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.5px', color: '#111' }}>Your domains</div>
               <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Monitoring expiry, SSL &amp; DNS changes</div>
             </div>
-            <button style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>
+            <button style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>
               + Add domain
             </button>
           </div>
@@ -96,7 +114,7 @@ export default function Dashboard() {
           {/* Pills */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 28 }}>
             {filters.map(f => (
-              <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: '1px solid', borderColor: filter === f ? '#111' : '#e5e5e5', background: filter === f ? '#111' : '#fff', color: filter === f ? '#fff' : '#555', fontFamily: 'Inter, sans-serif' }}>
+              <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: '1px solid', borderColor: filter === f ? '#111' : '#e5e5e5', background: filter === f ? '#111' : '#fff', color: filter === f ? '#fff' : '#555', fontFamily: 'Inter, sans-serif' }}>
                 {f === 'all' ? `All ${domains.length}` : f === 'expiring' ? '⚠ Expiring' : f}
               </button>
             ))}
@@ -113,9 +131,8 @@ export default function Dashboard() {
                 <div
                   key={d.id}
                   onClick={() => setExpanded(isOpen ? null : d.id)}
-                  style={{ border: '1px solid #e8e8e8', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', background: '#fff', boxShadow: isOpen ? '0 4px 20px rgba(0,0,0,.07)' : 'none', transition: 'box-shadow .15s, border-color .15s', borderColor: isOpen ? '#d4d4d4' : '#e8e8e8' }}
+                  style={{ border: '1px solid', borderColor: isOpen ? '#d4d4d4' : '#e8e8e8', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', background: '#fff', boxShadow: isOpen ? '0 4px 20px rgba(0,0,0,.07)' : 'none', transition: 'box-shadow .15s, border-color .15s' }}
                 >
-                  {/* Card body */}
                   <div style={{ padding: '18px 18px 14px' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.3px', color: '#111', marginBottom: 4 }}>
                       {d.name}<span style={{ color: '#aaa', fontWeight: 400 }}>{d.tld}</span>
@@ -124,7 +141,7 @@ export default function Dashboard() {
                       {d.registrar} · Registered {d.registered}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                      <div style={{ fontSize: 12.5, color: '#333' }}>
+                      <div style={{ fontSize: 13, color: '#111', fontWeight: 500 }}>
                         {d.status === 'dead' ? `Expired ${d.expiryDate}` : `Expires ${d.expiryDate}`}
                       </div>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 20, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>
@@ -133,12 +150,11 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontSize: 11, color: '#bbb' }}>Checked 2h ago</div>
-                      <div style={{ fontSize: 11, color: '#bbb', transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block' }}>▾</div>
+                      <div style={{ fontSize: 11, color: '#ccc' }}>Checked 2h ago</div>
+                      <div style={{ fontSize: 11, color: '#ccc', transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block' }}>▾</div>
                     </div>
                   </div>
 
-                  {/* Expanded */}
                   {isOpen && (
                     <div style={{ padding: '0 18px 18px' }}>
                       <div style={{ height: 1, background: '#f0f0f0', marginBottom: 14 }} />
