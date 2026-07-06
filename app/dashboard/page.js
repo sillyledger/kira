@@ -6,7 +6,7 @@ const domains = [
   { id: 1, name: 'aegosintel', tld: '.com', status: 'ok', expiryDate: 'May 21, 2028', registrar: 'Spaceship', registered: 'May 2026', ssl: '312 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
   { id: 2, name: 'two', tld: '.so', status: 'warn', expiryDate: 'Jun 26, 2026', registrar: 'Namecheap', registered: 'Sep 2023', ssl: '66 days left', sslStatus: 'warn', dns: '3 days ago', autoRenew: false },
   { id: 3, name: 'sorano', tld: '.space', status: 'ok', expiryDate: 'Mar 8, 2027', registrar: 'Porkbun', registered: 'Mar 2025', ssl: '201 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
-  { id: 4, name: 'tenkaro', tld: '.com', status: 'ok', expiryDate: 'Jun 1, 2027', registrar: 'Porkbun', registered: 'Jun 2025', ssl: '178 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
+  { id: 4, name: 'kira', tld: '.watch', status: 'ok', expiryDate: 'Jul 6, 2027', registrar: 'Porkbun', registered: 'Jul 2026', ssl: '178 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
   { id: 5, name: 'strevius', tld: '.com', status: 'dead', expiryDate: 'Jun 3, 2026', registrar: 'GoDaddy', registered: 'Jun 2024', ssl: 'Expired', sslStatus: 'dead', dns: 'Unknown', autoRenew: false },
 ]
 
@@ -37,8 +37,8 @@ export default function Dashboard() {
 
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px 16px', borderBottom: '1px solid #ebebeb' }}>
-          <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>T</div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Tenkaro</span>
+          <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
         </div>
 
         {/* Nav */}
