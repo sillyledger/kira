@@ -25,8 +25,23 @@ function deriveStatus(expires) {
   if (days < 60) return 'warn'
   return 'ok'
 }
+function sslView(row) {
+  // Nothing checked yet
+  if (!row.ssl_checked_at) return { ssl: '—', sslStatus: 'neutral', sslIssuer: null }
+  // Handshake failed / no cert
+  if (!row.ssl_valid_to) return { ssl: 'No cert', sslStatus: 'dead', sslIssuer: null }
+
+  const days = (new Date(row.ssl_valid_to) - new Date()) / 86400000
+  let sslStatus = 'ok'
+  if (days < 0) sslStatus = 'dead'
+  else if (!row.ssl_authorized) sslStatus = 'dead' // untrusted / mismatch
+  else if (days < 21) sslStatus = 'warn'
+
+  return { ssl: fmtDate(row.ssl_valid_to), sslStatus, sslIssuer: row.ssl_issuer || null }
+}
 function toCard(row) {
   const dot = row.domain.lastIndexOf('.')
+  const s = sslView(row)
   return {
     id: row.id,
     name: dot > 0 ? row.domain.slice(0, dot) : row.domain,
@@ -35,7 +50,8 @@ function toCard(row) {
     expiryDate: fmtDate(row.expires_at),
     registrar: row.registrar || '—',
     registered: fmtMonth(row.registered_at),
-    ssl: '—', sslStatus: 'ok', dns: '—', autoRenew: null,
+    ssl: s.ssl, sslStatus: s.sslStatus, sslIssuer: s.sslIssuer,
+    dns: '—', autoRenew: null,
   }
 }
 
@@ -59,15 +75,35 @@ export default function Dashboard() {
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
   const inputRef = useRef(null)
+  const sslCheckedRef = useRef(new Set())
 
   async function load() {
     setLoading(true)
     try {
       const res = await fetch('/api/domains')
       const json = await res.json()
-      setDomains((json.domains || []).map(toCard))
+      const rows = json.domains || []
+      setDomains(rows.map(toCard))
+      backfillSsl(rows)
     } catch (e) {}
     setLoading(false)
+  }
+
+  // Fire an SSL check for any domain that has never been checked (freshly
+  // added ones included). The route stamps ssl_checked_at even on failure,
+  // so this runs once per domain and won't loop.
+  async function backfillSsl(rows) {
+    const need = rows.filter(r => !r.ssl_checked_at && !sslCheckedRef.current.has(r.id))
+    if (need.length === 0) return
+    need.forEach(r => sslCheckedRef.current.add(r.id))
+    await Promise.all(need.map(r =>
+      fetch('/api/ssl-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: r.id }),
+      }).catch(() => {})
+    ))
+    load() // reload to show the cert data now in the DB
   }
 
   useEffect(() => { load() }, [])
@@ -332,7 +368,7 @@ export default function Dashboard() {
                       <div style={{ height: 1, background: '#f0f0f0', marginBottom: 14 }} />
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                         {[
-                          ['SSL cert', d.ssl, d.sslStatus],
+                          ['SSL cert', d.sslIssuer ? `${d.ssl} · ${d.sslIssuer}` : d.ssl, d.sslStatus],
                           ['Expiry date', d.expiryDate, d.status],
                           ['DNS changes', d.dns, 'neutral'],
                           ['Auto-renew', d.autoRenew === null ? '—' : d.autoRenew ? 'On' : 'Off', 'neutral'],
