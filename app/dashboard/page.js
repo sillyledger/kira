@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { UserButton, useUser } from '@clerk/nextjs'
 
 const domains = [
   { id: 1, name: 'aegosintel', tld: '.com', status: 'ok', expiryDate: 'May 21, 2028', registrar: 'Spaceship', registered: 'May 2026', ssl: '312 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
@@ -20,6 +21,7 @@ const badges = {
 export default function Dashboard() {
   const [expanded, setExpanded] = useState(null)
   const [filter, setFilter] = useState('all')
+  const { user } = useUser()
 
   const filters = ['all', '.com', '.so', '.space', 'expiring']
 
@@ -88,10 +90,10 @@ export default function Dashboard() {
 
         {/* Footer */}
         <div style={{ padding: '12px 14px', borderTop: '1px solid #ebebeb', display: 'flex', alignItems: 'center', gap: 9 }}>
-          <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', fontWeight: 600, flexShrink: 0 }}>P</div>
+          <UserButton afterSignOutUrl="/" />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>Pieter</div>
-            <div style={{ fontSize: 11, color: '#999' }}>Free · 5/5 domains</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{user?.firstName || user?.fullName || 'Account'}</div>
+            <div style={{ fontSize: 11, color: '#999' }}>Free plan</div>
           </div>
         </div>
       </div>
