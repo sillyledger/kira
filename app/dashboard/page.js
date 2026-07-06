@@ -1,15 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserButton, useUser } from '@clerk/nextjs'
-
-const domains = [
-  { id: 1, name: 'aegosintel', tld: '.com', status: 'ok', expiryDate: 'May 21, 2028', registrar: 'Spaceship', registered: 'May 2026', ssl: '312 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
-  { id: 2, name: 'two', tld: '.so', status: 'warn', expiryDate: 'Jun 26, 2026', registrar: 'Namecheap', registered: 'Sep 2023', ssl: '66 days left', sslStatus: 'warn', dns: '3 days ago', autoRenew: false },
-  { id: 3, name: 'sorano', tld: '.space', status: 'ok', expiryDate: 'Mar 8, 2027', registrar: 'Porkbun', registered: 'Mar 2025', ssl: '201 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
-  { id: 4, name: 'kira', tld: '.watch', status: 'ok', expiryDate: 'Jul 6, 2027', registrar: 'Porkbun', registered: 'Jul 2026', ssl: '178 days left', sslStatus: 'ok', dns: 'Never', autoRenew: true },
-  { id: 5, name: 'strevius', tld: '.com', status: 'dead', expiryDate: 'Jun 3, 2026', registrar: 'GoDaddy', registered: 'Jun 2024', ssl: 'Expired', sslStatus: 'dead', dns: 'Unknown', autoRenew: false },
-]
 
 const statusColors = { ok: '#16a34a', warn: '#d97706', dead: '#dc2626' }
 const badges = {
@@ -18,10 +10,69 @@ const badges = {
   dead: { label: 'Expired', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
 }
 
+function fmtDate(d) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+function fmtMonth(d) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+function deriveStatus(expires) {
+  if (!expires) return 'ok'
+  const days = (new Date(expires) - new Date()) / 86400000
+  if (days < 0) return 'dead'
+  if (days < 60) return 'warn'
+  return 'ok'
+}
+function toCard(row) {
+  const dot = row.domain.lastIndexOf('.')
+  return {
+    id: row.id,
+    name: dot > 0 ? row.domain.slice(0, dot) : row.domain,
+    tld: dot > 0 ? row.domain.slice(dot) : '',
+    status: deriveStatus(row.expires_at),
+    expiryDate: fmtDate(row.expires_at),
+    registrar: row.registrar || '—',
+    registered: fmtMonth(row.registered_at),
+    ssl: '—', sslStatus: 'ok', dns: '—', autoRenew: null,
+  }
+}
+
 export default function Dashboard() {
   const [expanded, setExpanded] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [domains, setDomains] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [adding, setAdding] = useState(false)
   const { user } = useUser()
+
+  async function load() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/domains')
+      const json = await res.json()
+      setDomains((json.domains || []).map(toCard))
+    } catch (e) {}
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function addDomain() {
+    const input = window.prompt('Enter a domain (e.g. example.com)')
+    if (!input) return
+    setAdding(true)
+    try {
+      await fetch('/api/domains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: input }),
+      })
+      await load()
+    } catch (e) {}
+    setAdding(false)
+  }
 
   const filters = ['all', '.com', '.so', '.space', 'expiring']
 
@@ -52,7 +103,7 @@ export default function Dashboard() {
             <span style={{ fontSize: 11, fontWeight: 600, color: '#999', letterSpacing: '.06em', textTransform: 'uppercase' }}>Monitor</span>
           </div>
           <div style={{ borderLeft: '2px solid #f0f0f0', marginLeft: 19, paddingLeft: 14, marginBottom: 10 }}>
-            {[['Domains', true, '5'], ['SSL Certs', false, null], ['DNS Records', false, null]].map(([name, active, count]) => (
+            {[['Domains', true, String(domains.length)], ['SSL Certs', false, null], ['DNS Records', false, null]].map(([name, active, count]) => (
               <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: 6, fontSize: 13.5, color: active ? '#111' : '#555', fontWeight: active ? 500 : 400, background: active ? '#f5f5f5' : 'transparent', marginBottom: 1, cursor: 'pointer' }}>
                 {name}
                 {count && <span style={{ fontSize: 10.5, background: '#f0f0f0', color: '#999', padding: '1px 6px', borderRadius: 8, fontWeight: 500 }}>{count}</span>}
@@ -108,8 +159,8 @@ export default function Dashboard() {
               <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.5px', color: '#111' }}>Your domains</div>
               <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Monitoring expiry, SSL &amp; DNS changes</div>
             </div>
-            <button style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>
-              + Add domain
+            <button onClick={addDomain} disabled={adding} style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4, opacity: adding ? 0.6 : 1 }}>
+              {adding ? 'Adding…' : '+ Add domain'}
             </button>
           </div>
 
@@ -152,7 +203,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontSize: 11, color: '#ccc' }}>Checked 2h ago</div>
+                      <div style={{ fontSize: 11, color: '#ccc' }}>Checked just now</div>
                       <div style={{ fontSize: 11, color: '#ccc', transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block' }}>▾</div>
                     </div>
                   </div>
@@ -165,7 +216,7 @@ export default function Dashboard() {
                           ['SSL cert', d.ssl, d.sslStatus],
                           ['Expiry date', d.expiryDate, d.status],
                           ['DNS changes', d.dns, 'neutral'],
-                          ['Auto-renew', d.autoRenew ? 'On' : 'Off', d.autoRenew ? 'ok' : 'dead'],
+                          ['Auto-renew', d.autoRenew === null ? '—' : d.autoRenew ? 'On' : 'Off', 'neutral'],
                         ].map(([lbl, val, st]) => (
                           <div key={lbl} style={{ padding: '8px 10px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                             <div style={{ fontSize: 10, color: '#bbb', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{lbl}</div>
@@ -185,6 +236,7 @@ export default function Dashboard() {
 
             {/* Add card */}
             <div
+              onClick={addDomain}
               style={{ border: '1px dashed #e5e5e5', borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32, cursor: 'pointer', background: '#fff', minHeight: 160 }}
               onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
               onMouseLeave={e => e.currentTarget.style.background = '#fff'}
@@ -193,6 +245,8 @@ export default function Dashboard() {
               <div style={{ fontSize: 12, color: '#ccc', fontWeight: 500 }}>Add a domain</div>
             </div>
           </div>
+
+          {loading && <div style={{ fontSize: 13, color: '#aaa', marginTop: 20 }}>Loading…</div>}
         </div>
       </div>
     </div>
