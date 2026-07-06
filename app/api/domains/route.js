@@ -8,7 +8,8 @@ export async function GET() {
   }
 
   const rows = await sql`
-    SELECT id, domain, registrar, registered_at, expires_at, last_checked, raw
+    SELECT id, domain, registrar, registered_at, expires_at, last_checked, raw,
+           ssl_valid_from, ssl_valid_to, ssl_issuer, ssl_authorized, ssl_error, ssl_checked_at
     FROM domains
     WHERE user_id = ${userId}
     ORDER BY expires_at ASC NULLS LAST
