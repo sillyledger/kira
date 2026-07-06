@@ -50,6 +50,7 @@ export default function Dashboard() {
   const [domains, setDomains] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
   const { user } = useUser()
 
   // ── modal state ───────────────────────────────────────────────
@@ -123,6 +124,33 @@ export default function Dashboard() {
       setError('Network error. Try again.')
       setAdding(false)
     }
+  }
+
+  async function deleteDomain(d) {
+    const full = `${d.name}${d.tld}`
+    if (!window.confirm(`Stop monitoring ${full}? This can’t be undone.`)) return
+
+    setDeletingId(d.id)
+    // optimistic remove — drop it from the UI immediately
+    const prev = domains
+    setDomains(domains.filter(x => x.id !== d.id))
+    if (expanded === d.id) setExpanded(null)
+
+    try {
+      const res = await fetch('/api/domains', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: d.id, domain: full }),
+      })
+      if (!res.ok) {
+        setDomains(prev) // roll back on failure
+        window.alert('Couldn’t remove that domain. Try again.')
+      }
+    } catch (e) {
+      setDomains(prev)
+      window.alert('Network error. Try again.')
+    }
+    setDeletingId(null)
   }
 
   const filters = ['all', '.com', '.so', '.space', 'expiring']
@@ -279,6 +307,13 @@ export default function Dashboard() {
                         <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #e5e5e5', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#444' }}>Edit alerts</button>
                         <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: '#111', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#fff' }}>Renew ↗</button>
                       </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteDomain(d) }}
+                        disabled={deletingId === d.id}
+                        style={{ width: '100%', marginTop: 8, padding: '8px', borderRadius: 8, border: '1px solid #f0f0f0', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: deletingId === d.id ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', color: '#dc2626', opacity: deletingId === d.id ? 0.5 : 1 }}
+                      >
+                        {deletingId === d.id ? 'Removing…' : 'Remove domain'}
+                      </button>
                     </div>
                   )}
                 </div>
