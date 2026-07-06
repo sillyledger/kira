@@ -8,7 +8,7 @@ export default function Home() {
           <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
           <span style={{ fontSize: 15, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
         </div>
-        <span style={{ fontSize: 13.5, color: '#555', fontWeight: 500, cursor: 'pointer' }}>Sign in</span>
+        <a href="/dashboard" style={{ fontSize: 13.5, color: '#555', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}>Sign in</a>
       </div>
 
       {/* Hero */}
