@@ -66,3 +66,40 @@ export async function POST(request) {
 
   return Response.json({ domain: rows[0] })
 }
+
+export async function DELETE(request) {
+  const { userId } = auth()
+  if (!userId) {
+    return Response.json({ error: 'Not signed in' }, { status: 401 })
+  }
+
+  const body = await request.json().catch(() => ({}))
+  const id = body.id
+  const domain = (body.domain || '').trim().toLowerCase()
+
+  // Delete by id when we have it (precise), otherwise fall back to domain.
+  // Either way it's scoped to the signed-in user, so nobody can delete
+  // someone else's rows.
+  let rows
+  if (id != null && id !== '') {
+    rows = await sql`
+      DELETE FROM domains
+      WHERE user_id = ${userId} AND id = ${id}
+      RETURNING id
+    `
+  } else if (domain) {
+    rows = await sql`
+      DELETE FROM domains
+      WHERE user_id = ${userId} AND domain = ${domain}
+      RETURNING id
+    `
+  } else {
+    return Response.json({ error: 'Missing id or domain' }, { status: 400 })
+  }
+
+  if (rows.length === 0) {
+    return Response.json({ error: 'Domain not found' }, { status: 404 })
+  }
+
+  return Response.json({ deleted: rows[0].id })
+}
