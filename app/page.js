@@ -10,7 +10,7 @@ export default function Home() {
     }}>
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ color: '#E8B84B', fontSize: '32px', fontWeight: '500' }}>
-          Tenkaro
+          KIRA
         </h1>
         <p style={{ color: '#555', marginTop: '8px', fontSize: '14px' }}>
           Domain monitoring — coming soon
