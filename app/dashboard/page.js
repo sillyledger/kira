@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { UserButton, useUser } from '@clerk/nextjs'
 
 const statusColors = { ok: '#16a34a', warn: '#d97706', dead: '#dc2626' }
@@ -39,6 +39,11 @@ function toCard(row) {
   }
 }
 
+// very light client-side sanity check — the real validation is WhoisJSON on the server
+function looksLikeDomain(v) {
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v)
+}
+
 export default function Dashboard() {
   const [expanded, setExpanded] = useState(null)
   const [filter, setFilter] = useState('all')
@@ -46,6 +51,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const { user } = useUser()
+
+  // ── modal state ───────────────────────────────────────────────
+  const [modalOpen, setModalOpen] = useState(false)
+  const [input, setInput] = useState('')
+  const [error, setError] = useState('')
+  const inputRef = useRef(null)
 
   async function load() {
     setLoading(true)
@@ -59,19 +70,59 @@ export default function Dashboard() {
 
   useEffect(() => { load() }, [])
 
-  async function addDomain() {
-    const input = window.prompt('Enter a domain (e.g. example.com)')
-    if (!input) return
+  function openModal() {
+    setInput('')
+    setError('')
+    setModalOpen(true)
+  }
+
+  function closeModal() {
+    if (adding) return // don't let them bail mid-request
+    setModalOpen(false)
+  }
+
+  // focus the field when the modal opens
+  useEffect(() => {
+    if (modalOpen) {
+      const t = setTimeout(() => inputRef.current?.focus(), 40)
+      return () => clearTimeout(t)
+    }
+  }, [modalOpen])
+
+  // Esc to close
+  useEffect(() => {
+    if (!modalOpen) return
+    function onKey(e) { if (e.key === 'Escape') closeModal() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modalOpen, adding])
+
+  async function submitDomain() {
+    const domain = input.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+    if (!domain) { setError('Enter a domain.'); return }
+    if (!looksLikeDomain(domain)) { setError('That doesn’t look like a valid domain.'); return }
+
+    setError('')
     setAdding(true)
     try {
-      await fetch('/api/domains', {
+      const res = await fetch('/api/domains', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: input }),
+        body: JSON.stringify({ domain }),
       })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setError(json.error || 'Couldn’t add that domain. Try again.')
+        setAdding(false)
+        return
+      }
       await load()
-    } catch (e) {}
-    setAdding(false)
+      setAdding(false)
+      setModalOpen(false)
+    } catch (e) {
+      setError('Network error. Try again.')
+      setAdding(false)
+    }
   }
 
   const filters = ['all', '.com', '.so', '.space', 'expiring']
@@ -159,8 +210,8 @@ export default function Dashboard() {
               <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.5px', color: '#111' }}>Your domains</div>
               <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Monitoring expiry, SSL &amp; DNS changes</div>
             </div>
-            <button onClick={addDomain} disabled={adding} style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4, opacity: adding ? 0.6 : 1 }}>
-              {adding ? 'Adding…' : '+ Add domain'}
+            <button onClick={openModal} style={{ background: '#111', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>
+              + Add domain
             </button>
           </div>
 
@@ -236,7 +287,7 @@ export default function Dashboard() {
 
             {/* Add card */}
             <div
-              onClick={addDomain}
+              onClick={openModal}
               style={{ border: '1px dashed #e5e5e5', borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32, cursor: 'pointer', background: '#fff', minHeight: 160 }}
               onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
               onMouseLeave={e => e.currentTarget.style.background = '#fff'}
@@ -249,6 +300,54 @@ export default function Dashboard() {
           {loading && <div style={{ fontSize: 13, color: '#aaa', marginTop: 20 }}>Loading…</div>}
         </div>
       </div>
+
+      {/* ── Add-domain modal ──────────────────────────────────────── */}
+      {modalOpen && (
+        <div
+          onClick={closeModal}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(17,17,17,.32)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 50 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 400, background: '#fff', border: '1px solid #e8e8e8', borderRadius: 16, boxShadow: '0 12px 40px rgba(0,0,0,.14)', padding: 24, fontFamily: 'Inter, sans-serif' }}
+          >
+            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px', color: '#111', marginBottom: 4 }}>Add a domain</div>
+            <div style={{ fontSize: 13, color: '#888', marginBottom: 18 }}>We’ll look it up and start tracking its expiry.</div>
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={e => { setInput(e.target.value); if (error) setError('') }}
+              onKeyDown={e => { if (e.key === 'Enter' && !adding) submitDomain() }}
+              placeholder="example.com"
+              disabled={adding}
+              style={{ width: '100%', height: 44, padding: '0 14px', border: '1px solid', borderColor: error ? '#fca5a5' : '#e0e0e0', borderRadius: 10, fontSize: 14, fontFamily: 'Inter, sans-serif', color: '#111', outline: 'none', background: adding ? '#fafafa' : '#fff' }}
+            />
+
+            {error && (
+              <div style={{ fontSize: 12.5, color: '#dc2626', marginTop: 8 }}>{error}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+              <button
+                onClick={closeModal}
+                disabled={adding}
+                style={{ flex: 1, height: 42, borderRadius: 10, border: '1px solid #e5e5e5', background: '#fff', fontSize: 13.5, fontWeight: 500, cursor: adding ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', color: '#555', opacity: adding ? 0.5 : 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitDomain}
+                disabled={adding}
+                style={{ flex: 1, height: 42, borderRadius: 10, border: 'none', background: '#111', fontSize: 13.5, fontWeight: 500, cursor: adding ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', color: '#fff', opacity: adding ? 0.7 : 1 }}
+              >
+                {adding ? 'Adding…' : 'Add domain'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
