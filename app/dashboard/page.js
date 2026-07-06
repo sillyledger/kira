@@ -47,6 +47,7 @@ function looksLikeDomain(v) {
 export default function Dashboard() {
   const [expanded, setExpanded] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [registrarFilter, setRegistrarFilter] = useState('all')
   const [domains, setDomains] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -153,9 +154,34 @@ export default function Dashboard() {
     setDeletingId(null)
   }
 
-  const filters = ['all', '.com', '.so', '.space', 'expiring']
+  // Build the TLD pills from the domains actually loaded, sorted by how
+  // many domains use each TLD (most common first). No more hardcoded list.
+  const tldCounts = domains.reduce((acc, d) => {
+    if (d.tld) acc[d.tld] = (acc[d.tld] || 0) + 1
+    return acc
+  }, {})
+  const tlds = Object.keys(tldCounts).sort((a, b) => tldCounts[b] - tldCounts[a] || a.localeCompare(b))
+  const filters = ['all', ...tlds, 'expiring']
+
+  // Unique registrars across loaded domains, alphabetical. Used for the
+  // registrar dropdown — domain investors buy across many registrars.
+  const registrars = Array.from(
+    new Set(domains.map(d => d.registrar).filter(r => r && r !== '—'))
+  ).sort((a, b) => a.localeCompare(b))
+
+  // If the active filter no longer exists (e.g. you removed the last .xyz),
+  // fall back to "all" so the grid doesn't look mysteriously empty.
+  useEffect(() => {
+    if (filter !== 'all' && filter !== 'expiring' && !tlds.includes(filter)) {
+      setFilter('all')
+    }
+    if (registrarFilter !== 'all' && !registrars.includes(registrarFilter)) {
+      setRegistrarFilter('all')
+    }
+  }, [domains]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = domains.filter(d => {
+    if (registrarFilter !== 'all' && d.registrar !== registrarFilter) return false
     if (filter === 'all') return true
     if (filter === 'expiring') return d.status === 'warn'
     return d.tld === filter
@@ -244,12 +270,26 @@ export default function Dashboard() {
           </div>
 
           {/* Pills */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 28 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
             {filters.map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: '1px solid', borderColor: filter === f ? '#111' : '#e5e5e5', background: filter === f ? '#111' : '#fff', color: filter === f ? '#fff' : '#555', fontFamily: 'Inter, sans-serif' }}>
                 {f === 'all' ? `All ${domains.length}` : f === 'expiring' ? '⚠ Expiring' : f}
               </button>
             ))}
+
+            {/* Registrar filter — only shown once there are 2+ registrars */}
+            {registrars.length > 1 && (
+              <select
+                value={registrarFilter}
+                onChange={e => setRegistrarFilter(e.target.value)}
+                style={{ marginLeft: 'auto', height: 32, padding: '0 30px 0 12px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: '1px solid', borderColor: registrarFilter !== 'all' ? '#111' : '#e5e5e5', background: `${registrarFilter !== 'all' ? '#111' : '#fff'} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='${registrarFilter !== 'all' ? '%23fff' : '%23999'}' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center`, color: registrarFilter !== 'all' ? '#fff' : '#555', fontFamily: 'Inter, sans-serif', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', outline: 'none' }}
+              >
+                <option value="all">All registrars</option>
+                {registrars.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div style={{ height: 1, background: '#ebebeb', marginBottom: 28 }} />
