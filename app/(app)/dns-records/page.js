@@ -18,25 +18,23 @@ function formatChanged(changedAt) {
 }
 
 const styles = {
-  page: { maxWidth: 860, margin: '0 auto' },
-  headerWrap: { marginBottom: 24 },
-  title: { fontSize: 22, fontWeight: 500, margin: '0 0 4px' },
-  subtitle: { fontSize: 14, color: '#6b7280', margin: 0 },
-  pillRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 },
+  pillRow: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 },
   pill: (active) => ({
-    borderRadius: 999,
-    fontSize: 13,
     padding: '6px 14px',
-    border: '1px solid ' + (active ? '#111827' : '#e5e7eb'),
-    background: active ? '#111827' : '#fff',
-    color: active ? '#fff' : '#111827',
+    borderRadius: 20,
+    fontSize: 13,
+    fontWeight: 500,
     cursor: 'pointer',
+    border: '1px solid',
+    borderColor: active ? '#111' : '#e5e5e5',
+    background: active ? '#111' : '#fff',
+    color: active ? '#fff' : '#555',
+    fontFamily: 'Inter, sans-serif',
   }),
-  cardList: { display: 'flex', flexDirection: 'column', gap: 16 },
   card: (flagged) => ({
     background: '#fff',
-    borderRadius: 12,
-    border: '1px solid ' + (flagged ? '#fca5a5' : '#e5e7eb'),
+    borderRadius: 14,
+    border: '1px solid ' + (flagged ? '#fca5a5' : '#e8e8e8'),
     padding: '16px 20px',
   }),
   cardHeaderBtn: {
@@ -50,30 +48,37 @@ const styles = {
     textAlign: 'left',
     padding: 0,
   },
-  domainName: { fontWeight: 500, fontSize: 15 },
-  recordCount: { fontSize: 13, color: '#6b7280', marginLeft: 8 },
+  domainName: { fontWeight: 700, fontSize: 14.5, letterSpacing: '-.2px', color: '#111' },
+  recordCount: { fontSize: 12, color: '#999', marginLeft: 8, fontWeight: 400 },
   headerRight: { display: 'flex', alignItems: 'center', gap: 10 },
   badge: (danger) => ({
-    fontSize: 12,
-    padding: '3px 10px',
-    borderRadius: 999,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    fontSize: 11,
+    fontWeight: 500,
+    padding: '4px 9px',
+    borderRadius: 20,
     background: danger ? '#fef2f2' : '#f0fdf4',
-    color: danger ? '#b91c1c' : '#15803d',
+    border: `1px solid ${danger ? '#fecaca' : '#bbf7d0'}`,
+    color: danger ? '#dc2626' : '#16a34a',
+    whiteSpace: 'nowrap',
   }),
   chevron: (open) => ({
     display: 'inline-block',
     transition: 'transform 0.15s',
     transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+    color: '#aaa',
   }),
   table: { width: '100%', fontSize: 13, marginTop: 12, tableLayout: 'fixed', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', fontWeight: 500, color: '#6b7280', padding: '6px 4px', borderBottom: '1px solid #e5e7eb' },
-  thRight: { textAlign: 'right', fontWeight: 500, color: '#6b7280', padding: '6px 4px', borderBottom: '1px solid #e5e7eb' },
-  td: { padding: '8px 4px', fontFamily: 'monospace', fontSize: 12, borderBottom: '1px solid #f3f4f6' },
-  tdRight: { padding: '8px 4px', textAlign: 'right', borderBottom: '1px solid #f3f4f6' },
+  th: { textAlign: 'left', fontWeight: 500, color: '#999', padding: '6px 4px', borderBottom: '1px solid #f0f0f0' },
+  thRight: { textAlign: 'right', fontWeight: 500, color: '#999', padding: '6px 4px', borderBottom: '1px solid #f0f0f0' },
+  td: { padding: '8px 4px', fontFamily: 'monospace', fontSize: 12, borderBottom: '1px solid #f5f5f5', color: '#111' },
+  tdRight: { padding: '8px 4px', textAlign: 'right', borderBottom: '1px solid #f5f5f5' },
   statusChanged: { color: '#dc2626', fontSize: 12 },
-  statusOk: { color: '#6b7280', fontSize: 12 },
-  loading: { fontSize: 14, color: '#6b7280' },
-  errorText: { fontSize: 14, color: '#dc2626' },
+  statusOk: { color: '#aaa', fontSize: 12 },
+  loading: { fontSize: 13, color: '#aaa', marginTop: 20 },
+  errorText: { fontSize: 13, color: '#c0392b', marginTop: 20 },
 }
 
 function DomainCard({ entry }) {
@@ -90,9 +95,15 @@ function DomainCard({ entry }) {
         </div>
         <div style={styles.headerRight}>
           {changedTypes.length > 0 ? (
-            <span style={styles.badge(true)}>{changedTypes.map((r) => r.record_type).join(', ')} changed</span>
+            <span style={styles.badge(true)}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#dc2626' }} />
+              {changedTypes.map((r) => r.record_type).join(', ')} changed
+            </span>
           ) : (
-            <span style={styles.badge(false)}>All unchanged</span>
+            <span style={styles.badge(false)}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#16a34a' }} />
+              All unchanged
+            </span>
           )}
           <span style={styles.chevron(open)}>⌄</span>
         </div>
@@ -161,33 +172,37 @@ export default function DnsRecordsPage() {
     : []
 
   return (
-    <div style={styles.page}>
-      <div style={styles.headerWrap}>
-        <h1 style={styles.title}>DNS records</h1>
-        <p style={styles.subtitle}>Detect unauthorized changes to nameservers, mail, and verification records</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff' }}>
+      <div style={{ width: '100%', maxWidth: 860, padding: '36px 24px 60px' }}>
 
-      <div style={styles.pillRow}>
-        <button style={styles.pill(filter === 'all')} onClick={() => setFilter('all')}>
-          All {domains ? domains.length : ''}
-        </button>
-        <button style={styles.pill(filter === 'changed')} onClick={() => setFilter('changed')}>
-          Changed
-        </button>
-        {TYPES.map((t) => (
-          <button key={t} style={styles.pill(filter === t)} onClick={() => setFilter(t)}>
-            {t}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.5px', color: '#111' }}>DNS records</div>
+          <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Detect unauthorized changes to nameservers, mail, and verification records</div>
+        </div>
+
+        <div style={styles.pillRow}>
+          <button style={styles.pill(filter === 'all')} onClick={() => setFilter('all')}>
+            All {domains ? domains.length : ''}
           </button>
-        ))}
-      </div>
+          <button style={styles.pill(filter === 'changed')} onClick={() => setFilter('changed')}>
+            Changed
+          </button>
+          {TYPES.map((t) => (
+            <button key={t} style={styles.pill(filter === t)} onClick={() => setFilter(t)}>
+              {t}
+            </button>
+          ))}
+        </div>
 
-      {error && <p style={styles.errorText}>{error}</p>}
-      {!domains && !error && <p style={styles.loading}>Loading…</p>}
+        {error && <div style={styles.errorText}>{error}</div>}
+        {!domains && !error && <div style={styles.loading}>Loading…</div>}
 
-      <div style={styles.cardList}>
-        {filtered.map((entry) => (
-          <DomainCard key={entry.domain} entry={entry} />
-        ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {filtered.map((entry) => (
+            <DomainCard key={entry.domain} entry={entry} />
+          ))}
+        </div>
+
       </div>
     </div>
   )
