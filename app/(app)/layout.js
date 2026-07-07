@@ -9,7 +9,7 @@ const NAV = {
   monitor: [
     { name: 'Domains', href: '/dashboard', showCount: true },
     { name: 'SSL Certs', href: '/ssl-certs' },
-    { name: 'DNS Records', href: null },
+    { name: 'DNS Records', href: /dns-records },
   ],
   alerts: [
     { name: 'Notifications', href: null },
