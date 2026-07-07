@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton, useUser } from '@clerk/nextjs'
+import { UserButton, useUser, useClerk } from '@clerk/nextjs'
 
 const NAV = {
   monitor: [
@@ -14,10 +14,6 @@ const NAV = {
   alerts: [
     { name: 'Notifications', href: null },
     { name: 'History', href: null },
-  ],
-  account: [
-    { name: 'Settings', href: '/settings' },
-    { name: 'Billing', href: null },
   ],
 }
 
@@ -30,6 +26,15 @@ function NavRow({ item, active, count }) {
     borderRadius: 6,
     fontSize: 13.5,
     marginBottom: 1,
+  }
+
+  // Opens a modal / runs an action (e.g. Clerk account) — clickable, no route
+  if (item.action) {
+    return (
+      <div onClick={item.action} style={{ ...base, color: '#555', fontWeight: 400, cursor: 'pointer' }}>
+        {item.name}
+      </div>
+    )
   }
 
   // Not built yet — muted, non-clickable, tagged "Soon"
@@ -61,6 +66,7 @@ function NavRow({ item, active, count }) {
 export default function DashboardLayout({ children }) {
   const pathname = usePathname()
   const { user } = useUser()
+  const { openUserProfile } = useClerk()
   const [domainCount, setDomainCount] = useState(null)
 
   useEffect(() => {
@@ -70,17 +76,24 @@ export default function DashboardLayout({ children }) {
       .catch(() => {})
   }, [])
 
+  const account = [
+    { name: 'Settings', action: openUserProfile },
+    { name: 'Billing', href: null },
+  ]
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#fff' }}>
 
       {/* Sidebar */}
       <div style={{ background: '#fff', borderRight: '1px solid #ebebeb', padding: '16px 0', display: 'flex', flexDirection: 'column' }}>
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px 16px', borderBottom: '1px solid #ebebeb' }}>
-          <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
-        </div>
+        {/* Logo — links home to Domains */}
+        <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px 16px', borderBottom: '1px solid #ebebeb', cursor: 'pointer' }}>
+            <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
+          </div>
+        </Link>
 
         {/* Nav */}
         <div style={{ padding: '12px 10px', flex: 1, overflowY: 'auto' }}>
@@ -110,8 +123,8 @@ export default function DashboardLayout({ children }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: '#999', letterSpacing: '.06em', textTransform: 'uppercase' }}>Account</span>
           </div>
           <div style={{ borderLeft: '1.5px solid #ebebeb', marginLeft: 15, paddingLeft: 12 }}>
-            {NAV.account.map(item => (
-              <NavRow key={item.name} item={item} active={pathname === item.href} count={null} />
+            {account.map(item => (
+              <NavRow key={item.name} item={item} active={false} count={null} />
             ))}
           </div>
         </div>
