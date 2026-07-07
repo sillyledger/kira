@@ -87,17 +87,7 @@ export default function SslCerts() {
   const shown = views.filter(v => filter === 'all' ? true : v.status === filter)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-      {/* Temporary top bar (sidebar comes with the shared layout) */}
-      <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 26px', borderBottom: '1px solid #ebebeb' }}>
-        <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-          <div style={{ width: 26, height: 26, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
-        </a>
-        <a href="/dashboard" style={{ fontSize: 13, color: '#555', fontWeight: 500, textDecoration: 'none' }}>← Dashboard</a>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff' }}>
       <div style={{ width: '100%', maxWidth: 860, padding: '36px 24px 60px' }}>
 
         {/* Header */}
