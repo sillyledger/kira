@@ -16,7 +16,7 @@ const NAV = {
     { name: 'History', href: null },
   ],
   account: [
-    { name: 'Settings', href: null },
+    { name: 'Settings', href: '/settings' },
     { name: 'Billing', href: null },
   ],
 }
