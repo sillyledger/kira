@@ -17,9 +17,8 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true">
             <rect x="1" y="1" width="98" height="98" rx="24" fill="#0C0E0D" stroke="#294034" strokeWidth="1.5" />
-            <polyline points="18,60 40,60 46,60 51,40 57,80 63,55 70,60 82,60" fill="none" stroke="#3FCF8E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            <text x="24" y="70" fontFamily="Inter, sans-serif" fontSize="44" fontWeight="700" fill="#F7F8F8" letterSpacing="-3">K</text>
-            <text x="55" y="70" fontFamily="Inter, sans-serif" fontSize="44" fontWeight="700" fill="#F7F8F8" letterSpacing="-3">P</text>
+            <path d="M50 20 L74 28 V50 C74 65 63 74 50 80 C37 74 26 65 26 50 V28 Z" fill="#3FCF8E" />
+            <polyline points="30,53 42,53 46,42 52,64 57,48 61,53 70,53" fill="none" stroke="#0C0E0D" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span style={{ fontSize: 16, fontWeight: 600, color: '#F7F8F8', letterSpacing: '-.3px' }}>KiraPulse</span>
         </div>
