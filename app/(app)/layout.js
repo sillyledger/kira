@@ -90,8 +90,12 @@ export default function DashboardLayout({ children }) {
         {/* Logo — links home to Domains */}
         <Link href="/dashboard" style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px 16px', borderBottom: '1px solid #ebebeb', cursor: 'pointer' }}>
-            <div style={{ width: 28, height: 28, background: '#111', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>K</div>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>Kira</span>
+            <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="1" y="1" width="98" height="98" rx="24" fill="#0C0E0D" stroke="#294034" strokeWidth="1.5" />
+              <path d="M50 20 L74 28 V50 C74 65 63 74 50 80 C37 74 26 65 26 50 V28 Z" fill="#3FCF8E" />
+              <polyline points="30,53 42,53 46,42 52,64 57,48 61,53 70,53" fill="none" stroke="#0C0E0D" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#111', letterSpacing: '-.3px' }}>KiraPulse</span>
           </div>
         </Link>
 
