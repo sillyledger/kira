@@ -178,7 +178,7 @@ export default function Home() {
       </div>
 
       {/* Product preview */}
-      <div id="product" style={{ position: 'relative', padding: '100px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div id="product" style={{ position: 'relative', padding: '100px 26px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 48px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 20 }}>
@@ -235,7 +235,7 @@ export default function Home() {
       </div>
 
       {/* Features */}
-      <div style={{ position: 'relative', padding: '100px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div style={{ position: 'relative', padding: '100px 26px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ maxWidth: 560, marginBottom: 48 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 20 }}>
@@ -296,7 +296,7 @@ export default function Home() {
       </div>
 
       {/* Health score spotlight */}
-      <div style={{ position: 'relative', padding: '100px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div style={{ position: 'relative', padding: '100px 26px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }} className="kp-score-grid">
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 22 }}>
@@ -338,7 +338,7 @@ export default function Home() {
       </div>
 
       {/* How it works */}
-      <div style={{ position: 'relative', padding: '88px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div style={{ position: 'relative', padding: '88px 26px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 56px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 20 }}>
@@ -366,7 +366,7 @@ export default function Home() {
       </div>
 
       {/* Pricing */}
-      <div id="pricing" style={{ position: 'relative', padding: '100px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div id="pricing" style={{ position: 'relative', padding: '100px 26px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 56px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 20 }}>
@@ -424,7 +424,7 @@ export default function Home() {
       </div>
 
       {/* FAQ */}
-      <div id="faq" style={{ position: 'relative', padding: '88px 26px', borderTop: `1px solid ${c.border}` }}>
+      <div id="faq" style={{ position: 'relative', padding: '88px 26px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 20 }}>
@@ -453,7 +453,7 @@ export default function Home() {
       </div>
 
       {/* Final CTA */}
-      <div style={{ position: 'relative', padding: '88px 26px', borderTop: `1px solid ${c.border}`, textAlign: 'center' }}>
+      <div style={{ position: 'relative', padding: '88px 26px', textAlign: 'center' }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, fontFamily: mono, textTransform: 'uppercase', letterSpacing: '.06em', padding: '6px 12px', borderRadius: 999, background: 'rgba(63,207,142,0.06)', border: '1px solid #23312A', color: c.mint, marginBottom: 22 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.green }} />
@@ -481,7 +481,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <div style={{ position: 'relative', padding: '56px 26px 36px', borderTop: `1px solid ${c.border}` }}>
+      <div style={{ position: 'relative', padding: '56px 26px 36px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 40 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
