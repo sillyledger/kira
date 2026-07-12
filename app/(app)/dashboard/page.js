@@ -36,15 +36,11 @@ function sslView(row) {
 
   return { ssl: fmtDate(row.ssl_valid_to), sslStatus, sslIssuer: row.ssl_issuer || null }
 }
-// Mirrors the 7-day "recently changed" window used on the DNS records page.
-// NS changes are flagged as more severe there too (red card border).
 function dnsView(changedTypes) {
   if (!changedTypes || changedTypes.length === 0) return { dns: 'No changes (7d)', dnsTone: 'ok' }
   const dnsTone = changedTypes.includes('NS') ? 'dead' : 'warn'
   return { dns: `${changedTypes.join(', ')} changed`, dnsTone }
 }
-// Composite health_score comes from lib/health-score.js via the API —
-// this just maps the number to a display tier.
 function scoreTier(score) {
   if (score < 40) return 'dead'
   if (score < 80) return 'warn'
@@ -56,6 +52,7 @@ function toCard(row) {
   const d = dnsView(row.dns_changed_types)
   return {
     id: row.id,
+    domain: row.domain,
     name: dot > 0 ? row.domain.slice(0, dot) : row.domain,
     tld: dot > 0 ? row.domain.slice(dot) : '',
     status: deriveStatus(row.expires_at),
@@ -83,6 +80,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [refreshingId, setRefreshingId] = useState(null)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [input, setInput] = useState('')
@@ -197,6 +195,30 @@ export default function Dashboard() {
     setDeletingId(null)
   }
 
+  // Forces a fresh WHOIS + SSL check for one domain. Re-uses the existing
+  // POST /api/domains (WHOIS) and /api/ssl-check (TLS) routes — both
+  // already upsert on the domain, so this is just re-running "add" and
+  // "SSL check" against a domain that already exists.
+  async function refreshDomain(d) {
+    setRefreshingId(d.id)
+    try {
+      await fetch('/api/domains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: d.domain }),
+      })
+      await fetch('/api/ssl-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: d.id }),
+      })
+      await load()
+    } catch (e) {
+      window.alert('Refresh failed. Try again.')
+    }
+    setRefreshingId(null)
+  }
+
   const tldCounts = domains.reduce((acc, d) => {
     if (d.tld) acc[d.tld] = (acc[d.tld] || 0) + 1
     return acc
@@ -268,6 +290,7 @@ export default function Dashboard() {
           {filtered.map(d => {
             const isOpen = expanded === d.id
             const badge = badges[scoreTier(d.score)]
+            const isRefreshing = refreshingId === d.id
             return (
               <div
                 key={d.id}
@@ -291,7 +314,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 11, color: '#ccc' }}>Checked just now</div>
+                    <div style={{ fontSize: 11, color: '#ccc' }}>{isRefreshing ? 'Refreshing…' : 'Checked just now'}</div>
                     <div style={{ fontSize: 11, color: '#ccc', transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none', display: 'inline-block' }}>▾</div>
                   </div>
                 </div>
@@ -313,7 +336,6 @@ export default function Dashboard() {
                       ))}
                     </div>
 
-                    {/* Three-signal breakdown — same idea as the landing page spotlight */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
                       {[['Domain', d.domainScore], ['SSL', d.sslScore], ['DNS', d.dnsScore]].map(([label, val]) => (
                         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -326,7 +348,14 @@ export default function Dashboard() {
                       ))}
                     </div>
 
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); refreshDomain(d) }}
+                        disabled={isRefreshing}
+                        style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #e5e5e5', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: isRefreshing ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif', color: '#444', opacity: isRefreshing ? 0.5 : 1 }}
+                      >
+                        {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
+                      </button>
                       <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #e5e5e5', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#444' }}>Edit alerts</button>
                       <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: '#111', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#fff' }}>Renew ↗</button>
                     </div>
