@@ -5,8 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 const statusColors = { ok: '#16a34a', warn: '#d97706', dead: '#dc2626' }
 const badges = {
   ok:   { label: 'Healthy', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
-  warn: { label: 'Expiring', bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
-  dead: { label: 'Expired', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+  warn: { label: 'Needs attention', bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
+  dead: { label: 'Critical', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
 }
 
 function fmtDate(d) {
@@ -36,9 +36,24 @@ function sslView(row) {
 
   return { ssl: fmtDate(row.ssl_valid_to), sslStatus, sslIssuer: row.ssl_issuer || null }
 }
+// Mirrors the 7-day "recently changed" window used on the DNS records page.
+// NS changes are flagged as more severe there too (red card border).
+function dnsView(changedTypes) {
+  if (!changedTypes || changedTypes.length === 0) return { dns: 'No changes (7d)', dnsTone: 'ok' }
+  const dnsTone = changedTypes.includes('NS') ? 'dead' : 'warn'
+  return { dns: `${changedTypes.join(', ')} changed`, dnsTone }
+}
+// Composite health_score comes from lib/health-score.js via the API —
+// this just maps the number to a display tier.
+function scoreTier(score) {
+  if (score < 40) return 'dead'
+  if (score < 80) return 'warn'
+  return 'ok'
+}
 function toCard(row) {
   const dot = row.domain.lastIndexOf('.')
   const s = sslView(row)
+  const d = dnsView(row.dns_changed_types)
   return {
     id: row.id,
     name: dot > 0 ? row.domain.slice(0, dot) : row.domain,
@@ -48,7 +63,11 @@ function toCard(row) {
     registrar: row.registrar || '—',
     registered: fmtMonth(row.registered_at),
     ssl: s.ssl, sslStatus: s.sslStatus, sslIssuer: s.sslIssuer,
-    dns: '—', autoRenew: null,
+    dns: d.dns, dnsTone: d.dnsTone,
+    score: row.health_score ?? 100,
+    domainScore: row.health_domain_score ?? 100,
+    sslScore: row.health_ssl_score ?? 100,
+    dnsScore: row.health_dns_score ?? 100,
   }
 }
 
@@ -183,14 +202,14 @@ export default function Dashboard() {
     return acc
   }, {})
   const tlds = Object.keys(tldCounts).sort((a, b) => tldCounts[b] - tldCounts[a] || a.localeCompare(b))
-  const filters = ['all', ...tlds, 'expiring']
+  const filters = ['all', ...tlds, 'attention']
 
   const registrars = Array.from(
     new Set(domains.map(d => d.registrar).filter(r => r && r !== '—'))
   ).sort((a, b) => a.localeCompare(b))
 
   useEffect(() => {
-    if (filter !== 'all' && filter !== 'expiring' && !tlds.includes(filter)) {
+    if (filter !== 'all' && filter !== 'attention' && !tlds.includes(filter)) {
       setFilter('all')
     }
     if (registrarFilter !== 'all' && !registrars.includes(registrarFilter)) {
@@ -201,7 +220,7 @@ export default function Dashboard() {
   const filtered = domains.filter(d => {
     if (registrarFilter !== 'all' && d.registrar !== registrarFilter) return false
     if (filter === 'all') return true
-    if (filter === 'expiring') return d.status === 'warn'
+    if (filter === 'attention') return d.score < 80
     return d.tld === filter
   })
 
@@ -224,7 +243,7 @@ export default function Dashboard() {
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
           {filters.map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: 'pointer', border: '1px solid', borderColor: filter === f ? '#111' : '#e5e5e5', background: filter === f ? '#111' : '#fff', color: filter === f ? '#fff' : '#555', fontFamily: 'Inter, sans-serif' }}>
-              {f === 'all' ? `All ${domains.length}` : f === 'expiring' ? '⚠ Expiring' : f}
+              {f === 'all' ? `All ${domains.length}` : f === 'attention' ? '⚠ Needs attention' : f}
             </button>
           ))}
 
@@ -248,7 +267,7 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
           {filtered.map(d => {
             const isOpen = expanded === d.id
-            const badge = badges[d.status]
+            const badge = badges[scoreTier(d.score)]
             return (
               <div
                 key={d.id}
@@ -266,8 +285,8 @@ export default function Dashboard() {
                     <div style={{ fontSize: 13, color: '#111', fontWeight: 500 }}>
                       {d.status === 'dead' ? `Expired ${d.expiryDate}` : `Expires ${d.expiryDate}`}
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 20, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>
-                      <div style={{ width: 4, height: 4, borderRadius: '50%', background: badge.color }} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 20, background: badge.bg, border: `1px solid ${badge.border}`, color: badge.color }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{d.score}</span>
                       {badge.label}
                     </div>
                   </div>
@@ -284,8 +303,8 @@ export default function Dashboard() {
                       {[
                         ['SSL cert', d.sslIssuer ? `${d.ssl} · ${d.sslIssuer}` : d.ssl, d.sslStatus],
                         ['Expiry date', d.expiryDate, d.status],
-                        ['DNS changes', d.dns, 'neutral'],
-                        ['Auto-renew', d.autoRenew === null ? '—' : d.autoRenew ? 'On' : 'Off', 'neutral'],
+                        ['DNS records', d.dns, d.dnsTone],
+                        ['Health score', `${d.score} / 100`, scoreTier(d.score)],
                       ].map(([lbl, val, st]) => (
                         <div key={lbl} style={{ padding: '8px 10px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                           <div style={{ fontSize: 10, color: '#bbb', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{lbl}</div>
@@ -293,6 +312,20 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Three-signal breakdown — same idea as the landing page spotlight */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                      {[['Domain', d.domainScore], ['SSL', d.sslScore], ['DNS', d.dnsScore]].map(([label, val]) => (
+                        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 42, fontSize: 10.5, color: '#999', flexShrink: 0 }}>{label}</span>
+                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#f0f0f0', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${val}%`, background: statusColors[scoreTier(val)], borderRadius: 2 }} />
+                          </div>
+                          <span style={{ width: 24, textAlign: 'right', fontFamily: 'monospace', fontSize: 10.5, color: '#999' }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid #e5e5e5', background: '#fff', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#444' }}>Edit alerts</button>
                       <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: '#111', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif', color: '#fff' }}>Renew ↗</button>
