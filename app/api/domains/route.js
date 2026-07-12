@@ -4,10 +4,6 @@ import { auth } from '@clerk/nextjs/server'
 import { sql } from '../../../lib/db'
 import { computeHealthScore } from '../../../lib/health-score'
 
-// Must match the 7-day window used in app/(app)/dns-records/page.js
-// (isChangedRecently) — keep these in sync if either changes.
-const DNS_CHANGE_WINDOW = '7 days'
-
 export async function GET() {
   const { userId } = auth()
   if (!userId) {
@@ -26,12 +22,18 @@ export async function GET() {
   // stored in dns_records. Does NOT trigger a live DNS lookup, so this
   // stays fast regardless of how many domains the user has. One query
   // covers every domain at once.
+  //
+  // 7 days must match the window in app/(app)/dns-records/page.js
+  // (isChangedRecently) — keep these in sync if either changes.
+  // Interval is a hardcoded literal on purpose: interpolating it as a
+  // bind param inside quotes breaks (Postgres reads '$1' as a literal
+  // string, not a placeholder).
   const dnsRows = await sql`
     SELECT domain, record_type, changed_at
     FROM dns_records
     WHERE user_id = ${userId}
       AND changed_at IS NOT NULL
-      AND changed_at > now() - interval '${DNS_CHANGE_WINDOW}'
+      AND changed_at > now() - interval '7 days'
   `
 
   const dnsByDomain = {}
@@ -117,9 +119,6 @@ export async function DELETE(request) {
   const id = body.id
   const domain = (body.domain || '').trim().toLowerCase()
 
-  // Delete by id when we have it (precise), otherwise fall back to domain.
-  // Either way it's scoped to the signed-in user, so nobody can delete
-  // someone else's rows.
   let rows
   if (id != null && id !== '') {
     rows = await sql`
