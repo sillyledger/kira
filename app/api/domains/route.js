@@ -3,6 +3,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '../../../lib/db'
 import { computeHealthScore } from '../../../lib/health-score'
+import { fallbackExpires, fallbackCreated, fallbackRegistrar } from '../../../lib/whois-fallback'
 
 export async function GET() {
   const { userId } = auth()
@@ -25,9 +26,6 @@ export async function GET() {
   //
   // 7 days must match the window in app/(app)/dns-records/page.js
   // (isChangedRecently) — keep these in sync if either changes.
-  // Interval is a hardcoded literal on purpose: interpolating it as a
-  // bind param inside quotes breaks (Postgres reads '$1' as a literal
-  // string, not a placeholder).
   const dnsRows = await sql`
     SELECT domain, record_type, changed_at
     FROM dns_records
@@ -90,9 +88,13 @@ export async function POST(request) {
     return Response.json({ error: 'WHOIS request error', detail: String(err) }, { status: 502 })
   }
 
-  const registrar = data?.registrar?.name || null
-  const registeredAt = data?.created || null
-  const expiresAt = data?.expires || null
+  // WhoisJSON's normalizer doesn't cover every registry equally — fall
+  // back to regex-extracting these from the raw WHOIS text when the
+  // structured field comes back empty. See lib/whois-fallback.js for
+  // which registries this currently covers.
+  const registrar = fallbackRegistrar(data)
+  const registeredAt = fallbackCreated(data)
+  const expiresAt = fallbackExpires(data)
 
   const rows = await sql`
     INSERT INTO domains (user_id, domain, registrar, registered_at, expires_at, last_checked, raw)
