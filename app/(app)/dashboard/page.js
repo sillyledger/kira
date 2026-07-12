@@ -199,22 +199,36 @@ export default function Dashboard() {
   // POST /api/domains (WHOIS) and /api/ssl-check (TLS) routes — both
   // already upsert on the domain, so this is just re-running "add" and
   // "SSL check" against a domain that already exists.
+  //
+  // Checks res.ok on both calls — a failed WHOIS lookup (rate limit,
+  // registry error, etc.) used to fail silently: the fetch resolved
+  // fine, nothing threw, and the card just didn't change.
   async function refreshDomain(d) {
     setRefreshingId(d.id)
     try {
-      await fetch('/api/domains', {
+      const whoisRes = await fetch('/api/domains', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: d.domain }),
       })
-      await fetch('/api/ssl-check', {
+      if (!whoisRes.ok) {
+        const json = await whoisRes.json().catch(() => ({}))
+        window.alert(`WHOIS refresh failed: ${json.error || whoisRes.status}`)
+      }
+
+      const sslRes = await fetch('/api/ssl-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: d.id }),
       })
+      if (!sslRes.ok) {
+        const json = await sslRes.json().catch(() => ({}))
+        window.alert(`SSL refresh failed: ${json.error || sslRes.status}`)
+      }
+
       await load()
     } catch (e) {
-      window.alert('Refresh failed. Try again.')
+      window.alert('Refresh failed. Network error.')
     }
     setRefreshingId(null)
   }
