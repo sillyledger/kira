@@ -1,5 +1,12 @@
+// app/api/domains/route.js
+
 import { auth } from '@clerk/nextjs/server'
 import { sql } from '../../../lib/db'
+import { computeHealthScore } from '../../../lib/health-score'
+
+// Must match the 7-day window used in app/(app)/dns-records/page.js
+// (isChangedRecently) — keep these in sync if either changes.
+const DNS_CHANGE_WINDOW = '7 days'
 
 export async function GET() {
   const { userId } = auth()
@@ -15,7 +22,39 @@ export async function GET() {
     ORDER BY expires_at ASC NULLS LAST
   `
 
-  return Response.json({ domains: rows })
+  // Cached-only DNS drift summary — reads whatever /api/dns-records last
+  // stored in dns_records. Does NOT trigger a live DNS lookup, so this
+  // stays fast regardless of how many domains the user has. One query
+  // covers every domain at once.
+  const dnsRows = await sql`
+    SELECT domain, record_type, changed_at
+    FROM dns_records
+    WHERE user_id = ${userId}
+      AND changed_at IS NOT NULL
+      AND changed_at > now() - interval '${DNS_CHANGE_WINDOW}'
+  `
+
+  const dnsByDomain = {}
+  for (const r of dnsRows) {
+    if (!dnsByDomain[r.domain]) dnsByDomain[r.domain] = []
+    dnsByDomain[r.domain].push(r.record_type)
+  }
+
+  const domains = rows.map((row) => {
+    const dnsChangedTypes = dnsByDomain[row.domain] || []
+    const health = computeHealthScore(row, dnsChangedTypes)
+    return {
+      ...row,
+      dns_changed_types: dnsChangedTypes,
+      health_score: health.score,
+      health_domain_score: health.domainScore,
+      health_ssl_score: health.sslScore,
+      health_dns_score: health.dnsScore,
+      health_worst_signal: health.worstSignal,
+    }
+  })
+
+  return Response.json({ domains })
 }
 
 export async function POST(request) {
